@@ -1,149 +1,123 @@
 import streamlit as st
-from openai import OpenAI
-import json
-
-# Assessment areas and questions
-ASSESSMENT_AREAS = {
-    "data_readiness": {
-        "title": "Data Infrastructure & Quality",
-        "questions": [
-            "How would you rate the quality and organization of your company's data?",
-            "Do you have established data governance policies?",
-            "How is sensitive data currently handled in your organization?"
-        ]
-    },
-    "technical_capability": {
-        "title": "Technical Infrastructure",
-        "questions": [
-            "What computing resources do you currently have available?",
-            "Does your team have experience with AI/ML technologies?",
-            "How integrated are your current technical systems?"
-        ]
-    },
-    "business_alignment": {
-        "title": "Business Strategy & Use Cases",
-        "questions": [
-            "What are your primary objectives for implementing GenAI?",
-            "Have you identified specific use cases for GenAI?",
-            "How does GenAI align with your current business strategy?"
-        ]
-    },
-    "change_readiness": {
-        "title": "Organizational Change Readiness",
-        "questions": [
-            "How would you describe your organization's culture towards technological change?",
-            "What training programs do you have in place?",
-            "How do you plan to manage the transition to AI-enhanced workflows?"
-        ]
-    }
-}
-
-def initialize_session_state():
-    """Initialize session state variables."""
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    if "current_area" not in st.session_state:
-        st.session_state.current_area = "introduction"
-    if "responses" not in st.session_state:
-        st.session_state.responses = {}
-    if "assessment_complete" not in st.session_state:
-        st.session_state.assessment_complete = False
-
-def get_system_prompt():
-    """Return the system prompt for the AI."""
-    return """You are an AI Readiness Assessment expert. Guide the user through evaluating their organization's readiness 
-    for implementing Generative AI. Ask questions one at a time, listen carefully to responses, and provide thoughtful 
-    insights. Be professional but conversational. Focus on understanding their current state and providing actionable 
-    recommendations. If you detect potential risks or gaps, address them constructively."""
-
-def generate_report(responses):
-    """Generate a summary report based on assessment responses."""
-    report_prompt = f"""Based on the following assessment responses, provide a comprehensive readiness report with specific 
-    recommendations. Include strengths, areas for improvement, and next steps. Responses: {json.dumps(responses, indent=2)}"""
-    
-    return report_prompt
+import streamlit.components.v1 as components
 
 def main():
-    st.title("🤖 GenAI Readiness Assessment")
-    st.write(
-        "Welcome to the Generative AI Readiness Assessment tool. This interactive assessment will help evaluate "
-        "your organization's preparedness for implementing GenAI solutions and provide tailored recommendations."
+    # Page configuration
+    st.set_page_config(
+        page_title="GenAI Readiness Assessment",
+        page_icon="🤖",
+        layout="wide"
     )
 
-    initialize_session_state()
-
-    # API key input
-    openai_api_key = st.text_input("OpenAI API Key", type="password")
-    if not openai_api_key:
-        st.info("Please add your OpenAI API key to continue.", icon="🗝️")
-        return
-
-    client = OpenAI(api_key=openai_api_key)
-
-    # Display existing chat messages
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    # Handle initial message
-    if not st.session_state.messages:
-        # Add system prompt
-        st.session_state.messages.append({
-            "role": "system",
-            "content": get_system_prompt()
-        })
-        # Add welcome message
-        initial_prompt = "Hello! I'll be guiding you through assessing your organization's GenAI readiness. Let's start with understanding your current data infrastructure. How would you rate the quality and organization of your company's data?"
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": initial_prompt
-        })
-        with st.chat_message("assistant"):
-            st.markdown(initial_prompt)
-
-    # Chat input
-    if prompt := st.chat_input("Your response..."):
-        # Add user message
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        # Generate and stream response
-        stream = client.chat.completions.create(
-            model="gpt-4",  # Using GPT-4 for better assessment capabilities
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
-            stream=True,
+    # Main header section
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        st.title("🤖 GenAI Readiness Assessment")
+        st.write(
+            "Evaluate your organization's preparedness for implementing Generative AI solutions. "
+            "Our assessment will help you understand your strengths and areas for improvement."
         )
 
-        with st.chat_message("assistant"):
-            response = st.write_stream(stream)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+    # Assessment overview section
+    st.subheader("Assessment Areas")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown("""
+        ### 📊 Data Readiness
+        - Data quality
+        - Governance
+        - Privacy & security
+        """)
+    
+    with col2:
+        st.markdown("""
+        ### 💻 Technical Infrastructure
+        - Computing resources
+        - Integration capabilities
+        - Technical expertise
+        """)
+    
+    with col3:
+        st.markdown("""
+        ### 🎯 Business Strategy
+        - Use case identification
+        - ROI assessment
+        - Implementation planning
+        """)
+    
+    with col4:
+        st.markdown("""
+        ### 👥 Change Management
+        - Organization culture
+        - Training programs
+        - Process adaptation
+        """)
 
-        # Store response in assessment data
-        if st.session_state.current_area in ASSESSMENT_AREAS:
-            if st.session_state.current_area not in st.session_state.responses:
-                st.session_state.responses[st.session_state.current_area] = []
-            st.session_state.responses[st.session_state.current_area].append({
-                "question": st.session_state.messages[-2]["content"],
-                "response": prompt
-            })
+    # Feazy Chat Integration
+    st.write("---")
+    st.subheader("Start Your Assessment")
+    st.write("Chat with our AI expert to assess your organization's GenAI readiness.")
+    
+    # Embedding Feazy chat component
+    feazy_html = """
+    <div style="height: 600px; border-radius: 10px; background: white;">
+        <script type="module" src="https://unpkg.com/feazy-plugin/dist/feazy-chat-component.es.js"></script>
+        <chat-component 
+            licensing-key=""
+            promptId="28c99f7b-ce8a-4693-8c03-e887962eb1ad"
+            isDialogVisible="true">
+        </chat-component>
+    </div>
+    
+    <style>
+        chat-component {
+            --primary-color: #2E86C1;
+            --secondary-color: #F8F9F9;
+            --text-color: #333333;
+            --border-color: #E5E7E9;
+            --bot-message-bg: #EBF5FB;
+            --user-message-bg: #F4F6F7;
+            --header-bg: #2E86C1;
+            --header-text: #FFFFFF;
+        }
+    </style>
+    """
+    
+    # Using streamlit components to render the Feazy chat
+    components.html(feazy_html, height=650)
+    
+    # Additional Resources Section
+    st.write("---")
+    st.subheader("Additional Resources")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        ### 📚 Learning Resources
+        - [Guide to GenAI Implementation](/)
+        - [Best Practices & Case Studies](/)
+        - [Technical Requirements Guide](/)
+        """)
+    
+    with col2:
+        st.markdown("""
+        ### 🔗 Useful Links
+        - [GenAI ROI Calculator](/)
+        - [Implementation Roadmap Template](/)
+        - [Training Resources](/)
+        """)
 
-    # Generate final report when assessment is complete
-    if st.session_state.assessment_complete:
-        st.write("---")
-        st.subheader("Assessment Report")
-        report_prompt = generate_report(st.session_state.responses)
-        
-        report_response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": report_prompt}],
-            stream=False,
-        )
-        
-        st.markdown(report_response.choices[0].message.content)
+    # Footer
+    st.write("---")
+    st.markdown(
+        """
+        <div style='text-align: center; color: #666666; padding: 20px;'>
+            Need help? Contact our support team at support@example.com
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
 
 if __name__ == "__main__":
     main()
